@@ -3,7 +3,7 @@ from streamlit_extras.switch_page_button import switch_page
 from streamlit_ace import st_ace, KEYBINDINGS, LANGUAGES, THEMES
 from streamlit.components.v1 import html
 from st_pages import show_pages, Page, hide_pages
-from audio_recorder_streamlit import audio_recorder
+from st_audiorec import st_audiorec
 
 import pandas as pd
 import numpy as np
@@ -270,19 +270,19 @@ body {{
 
                 # solution_explanation = ""
 
-            # if not st.session_state.audio_bytes:
-            #     st.session_state.audio_bytes = audio_recorder(
-            #         "Click to record your explanation")
-            # else:
-            #     st.audio(st.session_state.audio_bytes, format="audio/wav")
-            #     control_cols = st.columns([1, 1, 2])
-            #     if control_cols[0].button("Re-record", use_container_width=True):
-            #         st.session_state.audio_bytes = None
-            #         st.rerun()
-            #     if control_cols[1].button("Save", type="primary", use_container_width=True):
-            #         # TODO: Save audio to db
-            #         upload_audio_to_firebase(st.session_state.audio_bytes, "explanation.mp3")
-            #         pass
+            if not st.session_state.audio_bytes:
+                st.session_state.audio_bytes = st_audiorec()
+            else:
+                st.audio(st.session_state.audio_bytes, format="audio/wav")
+                control_cols = st.columns([1, 1, 2])
+                if control_cols[0].button("Re-record", use_container_width=True):
+                    st.session_state.audio_bytes = None
+                    st.rerun()
+                if control_cols[1].button("Save", type="primary", use_container_width=True):
+                    # TODO: Save audio to db
+                    audio_name = f"{st.session_state.test_code}_{st.session_state.participant_id}_explanation.mp3"
+                    upload_audio_to_firebase(st.session_state.audio_bytes, audio_name)
+                    pass
 
             if form.columns([3, 2])[1].form_submit_button("🔥 Submit Solution" if not st.session_state.submitted_current_problem else "✔ Submitted", type="primary", disabled=st.session_state.submitted_current_problem, use_container_width=True):
                 if not solution_code:
