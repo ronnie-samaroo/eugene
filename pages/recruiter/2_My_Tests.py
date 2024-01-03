@@ -36,6 +36,9 @@ def my_tests():
     
     # Main Section
     st.header("My Tests")
+
+    # Get audio name with test code and participant's id
+    # audio_name = f"{st.test_code}_{st.participant_id}_explanation.mp3"
     
     my_tests = db.collection("tests").where(
         filter=FieldFilter("creator", "==", st.session_state.user["email"])).get() 
@@ -91,6 +94,8 @@ def my_tests():
                                                 st.write("No solution submitted")
                                             else:
                                                 solution = participant['solutions'][k]
+                                                participant_ids = list(test.to_dict()['participants'].keys())
+                                                audio_name = f"{test.id}_{participant_ids[j]}_explanation.mp3"
                                                 with st.container(border=True):
                                                     st.markdown("#### Candidate solution")
                                                     st.code(solution["code"])
@@ -105,7 +110,7 @@ def my_tests():
                                                     st.write(f"Explanation rating: {solution['explanation_rating']}/5")
                                                     st.write(solution['reason'])
                                                 st.video(get_video_url_from_firebase("recording.mp4"))
-                                                st.audio(get_video_url_from_firebase("explanation.mp3"))
+                                                st.audio(get_video_url_from_firebase(audio_name))
 # Run the Streamlit appx
 if __name__ == '__main__':
     initialize_app()

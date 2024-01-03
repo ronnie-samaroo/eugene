@@ -281,7 +281,8 @@ body {{
                     st.rerun()
                 if control_cols[1].button("Save", type="primary", use_container_width=True):
                     # TODO: Save audio to db
-                    upload_audio_to_firebase(st.session_state.audio_bytes, "explanation.mp3")
+                    audio_name = f"{st.session_state.test_code}_{st.session_state.participant_id}_explanation.mp3"
+                    upload_audio_to_firebase(st.session_state.audio_bytes, audio_name)
                     pass
 
             if form.columns([3, 2])[1].form_submit_button("🔥 Submit Solution" if not st.session_state.submitted_current_problem else "✔ Submitted", type="primary", disabled=st.session_state.submitted_current_problem, use_container_width=True):
