@@ -3,7 +3,7 @@ from streamlit_extras.switch_page_button import switch_page
 from streamlit_ace import st_ace, KEYBINDINGS, LANGUAGES, THEMES
 from streamlit.components.v1 import html
 from st_pages import show_pages, Page, hide_pages
-from audio_recorder_streamlit import audio_recorder
+from st_audiorec import st_audiorec
 
 import pandas as pd
 import numpy as np
@@ -271,8 +271,7 @@ body {{
                 solution_explanation = ""
 
             if not st.session_state.audio_bytes:
-                st.session_state.audio_bytes = audio_recorder(
-                    "Click to record your explanation")
+                st.session_state.audio_bytes = st_audiorec()
             else:
                 st.audio(st.session_state.audio_bytes, format="audio/wav")
                 control_cols = st.columns([1, 1, 2])

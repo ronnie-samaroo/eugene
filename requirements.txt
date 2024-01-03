@@ -20,3 +20,4 @@ streamlit-option-menu==0.3.6
 streamlit_webrtc
 opencv-python
 audio-recorder-streamlit
+streamlit-audiorec
