@@ -8,7 +8,7 @@ from st_audiorec import st_audiorec
 import pandas as pd
 import numpy as np
 
-from google.cloud import firestore
+from google.cloud import speech
 
 from datetime import datetime, timezone, timedelta
 import random
@@ -23,6 +23,51 @@ from utils.webcam import webcam
 from utils.upload_audio import upload_audio_to_firebase
 
 from ai.code_test_agent import assess_code_with_gpt4
+
+def speech_to_text(
+    config: speech.RecognitionConfig,
+    audio: speech.RecognitionAudio,
+) -> speech.RecognizeResponse:
+    client = speech.SpeechClient()
+
+    # Synchronous speech recognition request
+    response = client.recognize(config=config, audio=audio)
+    print_response(response)
+
+    return response
+
+def print_response(response: speech.RecognizeResponse):
+    for result in response.results:
+        print_result(result)
+
+
+def print_result(result: speech.SpeechRecognitionResult):
+    best_alternative = result.alternatives[0]
+    print("-" * 80)
+    print(f"language_code: {result.language_code}")
+    print(f"transcript:    {best_alternative.transcript}")
+    print(f"confidence:    {best_alternative.confidence:.0%}")
+
+def transcribe_gcs(gcs_uri: str) -> speech.RecognizeResponse:
+    """Transcribes the audio file specified by the gcs_uri."""
+
+    client = speech.SpeechClient()
+
+    audio = speech.RecognitionAudio(uri=gcs_uri)
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.MP3,
+        language_code="en-US",
+    )
+
+    response = client.recognize(config=config, audio=audio)
+
+    # Each result is for a consecutive portion of the audio. Iterate through
+    # them to get the transcripts for the entire audio file.
+    for result in response.results:
+        # The first alternative is the most likely one for this portion.
+        print(f"Transcript: {result.alternatives[0].transcript}")
+
+    return response
 
 
 def reset_state():
@@ -48,6 +93,8 @@ def candidate():
         st.session_state.submitted_current_problem = False
     if 'audio_bytes' not in st.session_state:
         st.session_state.audio_bytes = None
+    if 'explanation' not in st.session_state:
+        st.session_state.explanation = ""
 
     # Page Config
     st.set_page_config(
@@ -265,37 +312,38 @@ body {{
                     min_lines=30,
                     key=f"ace_{st.session_state.current_problem_index}",
                 )
-                solution_explanation = st.text_area(
-                    "Explanation", key=f"explanation_textarea_{st.session_state.current_problem_index}")
 
-                # solution_explanation = ""
-
-            if not st.session_state.audio_bytes:
                 st.session_state.audio_bytes = st_audiorec()
-            else:
-                st.audio(st.session_state.audio_bytes, format="audio/wav")
-                control_cols = st.columns([1, 1, 2])
-                if control_cols[0].button("Re-record", use_container_width=True):
-                    st.session_state.audio_bytes = None
-                    st.rerun()
-                if control_cols[1].button("Save", type="primary", use_container_width=True):
-                    # TODO: Save audio to db
-                    audio_name = f"{st.session_state.test_code}_{st.session_state.participant_id}_explanation.mp3"
-                    upload_audio_to_firebase(st.session_state.audio_bytes, audio_name)
-                    pass
 
             if form.columns([3, 2])[1].form_submit_button("🔥 Submit Solution" if not st.session_state.submitted_current_problem else "✔ Submitted", type="primary", disabled=st.session_state.submitted_current_problem, use_container_width=True):
                 if not solution_code:
                     st.error("Code should not be empty")
                 else:
                     with st.spinner("Submitting solution..."):
+                        # TODO: Extract the transcript of explanation record
+                        audio_name = f"{st.session_state.test_code}_{st.session_state.participant_id}_explanation.mp3"
+                        config = speech.RecognitionConfig(
+                            language_code="en",
+                            audio_channel_count=2,
+                            enable_separate_recognition_per_channel=True,
+                        )
+                        audio = speech.RecognitionAudio(
+                            content=st.session_state.audio_bytes
+                        )
+                        response = speech_to_text(config, audio)
+                        st.session_state.explanation = response.results[0].alternatives[0].transcript
+
+                        # TODO: Save audio to db
+                        upload_audio_to_firebase(st.session_state.audio_bytes, audio_name)
+
+                        # TODO: Save the results
                         code_test_result = assess_code_with_gpt4(
-                            problem=test["problems"][st.session_state.current_problem_index]["description"], code=solution_code, explanation=solution_explanation)
+                            problem=test["problems"][st.session_state.current_problem_index]["description"], code=solution_code, explanation=st.session_state.explanation)
 
                         participants = test["participants"]
                         participants[st.session_state.participant_id]["solutions"].append({
                             "code": solution_code,
-                            "explanation": solution_explanation,
+                            "explanation": st.session_state.explanation,
                             "passed": code_test_result.passed,
                             "code_quality": code_test_result.code_quality,
                             "explanation_rating": code_test_result.explanation_rating,

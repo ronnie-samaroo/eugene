@@ -21,3 +21,4 @@ streamlit_webrtc
 opencv-python
 audio-recorder-streamlit
 streamlit-audiorec
+google-cloud-speech
