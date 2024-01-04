@@ -312,33 +312,8 @@ body {{
                     min_lines=30,
                     key=f"ace_{st.session_state.current_problem_index}",
                 )
-                # solution_explanation = st.text_area(
-                #     "Explanation", key=f"explanation_textarea_{st.session_state.current_problem_index}")
 
                 st.session_state.audio_bytes = st_audiorec()
-
-            # if not st.session_state.audio_bytes:
-            #     st.session_state.audio_bytes = st_audiorec()
-            # else:
-            #     st.audio(st.session_state.audio_bytes, format="audio/wav")
-            #     control_cols = st.columns([1, 1, 2])
-            #     if control_cols[0].button("Re-record", use_container_width=True):
-            #         st.session_state.audio_bytes = None
-            #         st.rerun()
-            #     if control_cols[1].button("Save", type="primary", use_container_width=True):
-            #         # TODO: Save audio to db
-            #         audio_name = f"{st.session_state.test_code}_{st.session_state.participant_id}_explanation.mp3"
-            #         config = speech.RecognitionConfig(
-            #             language_code="en",
-            #             audio_channel_count=2,
-            #             enable_separate_recognition_per_channel=True,
-            #         )
-            #         audio = speech.RecognitionAudio(
-            #             content=st.session_state.audio_bytes
-            #         )
-            #         response = speech_to_text(config, audio)
-            #         st.session_state.explanation = response.results[0].alternatives[0].transcript
-            #         upload_audio_to_firebase(st.session_state.audio_bytes, audio_name)
 
             if form.columns([3, 2])[1].form_submit_button("🔥 Submit Solution" if not st.session_state.submitted_current_problem else "✔ Submitted", type="primary", disabled=st.session_state.submitted_current_problem, use_container_width=True):
                 if not solution_code:
