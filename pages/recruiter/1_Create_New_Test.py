@@ -57,6 +57,10 @@ def create_new_test():
         st.session_state.problem_hashes = []
     if 'selected_topic' not in st.session_state:
         st.session_state.selected_topic = None
+    if 'gpt_on' not in st.session_state:
+        st.session_state.gpt_on = False
+    if 'gpt_desc' not in st.session_state:
+        st.session_state.gpt_desc = ""
     
     
     # Form
@@ -76,15 +80,19 @@ def create_new_test():
         problem_dict[problem["hash"]] = problem
         hash_selected_dict[problem["hash"]] = False
     for hash in st.session_state.problem_hashes:
-        print(hash)
         hash_selected_dict[hash] = True
     selected_problems = [problem_dict[hash] for hash in st.session_state.problem_hashes]
     unselected_problems = [problem for problem in all_problems if not hash_selected_dict[problem["hash"]]]
     estimated_test_time_limit = sum([problem["time_limit"] for problem in selected_problems])
     
     with st.form("new_test_form", border=False):
-        with st.columns([1, 3])[0]:
-            test_time_limit = st.number_input("Time limit (in minutes)", min_value=10, step=1, value=max(estimated_test_time_limit, 10))
+        col1, col2, col3, col4 = st.columns(4)
+        test_time_limit = col1.number_input("Time limit (in minutes)", min_value=10, step=1, disabled=st.session_state.gpt_on, value=max(estimated_test_time_limit, 10))
+        gpt_usage = col3.radio(
+            "Set ChatGPT usage",
+            options=["Allow", "Disable"],
+        )
+
         col1, col2 = st.columns([1, 1])
         with col1:
             with st.container(border = False):
@@ -133,7 +141,8 @@ def create_new_test():
                                     "topic": selected_topic,
                                     "participants": {},
                                     "time_limit": test_time_limit,
-                                    "problems": selected_problems
+                                    "problems": selected_problems,
+                                    "gpt_usage": True if gpt_usage == "Allow" else False
                                 })
                                 st.success(f"Successfully saved! Test code: {new_test_code}")
                             except Exception as e:
