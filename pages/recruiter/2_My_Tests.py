@@ -11,6 +11,11 @@ from utils.init import initialize_app
 from utils.components import sidebar_logout, hide_seperator_from_sidebar
 from utils.storage import get_video_url_from_firebase
 
+def get_gpt_usage(problem: dict):
+    if "gpt_usage" in problem and problem["gpt_usage"] == True:
+        return "Allow"
+    else:
+        return "Disable"
 
 def my_tests():
     # Page Config
@@ -51,7 +56,7 @@ def my_tests():
             test = my_tests[i]
             with tab:
                 with st.container(border=True):
-                    st.write(f"Topic: {test.get('topic')} | Total {len(test.get('problems'))} problems | Time limit: {test.get('time_limit')} mins")
+                    st.write(f"Topic: {test.get('topic')} | Total {len(test.get('problems'))} problems | Time limit: {test.get('time_limit')} mins | ChatGPT: {get_gpt_usage(test.to_dict())}")
                     st.write(f"Created by {test.get('creator')} at {test.get('created_at').strftime('%Y-%m-%d %H:%M:%S')}")
                 
                 col1, col2 = st.columns(2)
